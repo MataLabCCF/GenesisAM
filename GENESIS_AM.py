@@ -75,7 +75,7 @@ def createVCF(begin, end, msp, outputFolder, outputName, covarName):
                 FBP = split[1]
                 LBP = split[2]
                 NV= split[5]
-                POS = int(int(FBP)+int(LBP)/2)
+                POS = int((int(FBP)+int(LBP))/2)
                 REF = "T" #oTher ancestry
                 ALT = "A" #Ancestry
                 QUAL = FILTER = "."
