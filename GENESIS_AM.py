@@ -319,15 +319,17 @@ if __name__ == '__main__':
 
         file = gzip.open(f"{args.outputFolder}/PLINK_Results/{args.outputName}_{POP}_R2.ld.gz")
         sumAll = 0
-        numLine = 0
+        numNumber = 0
         for line in file:
-            sumLine = sum(map(float, line.decode("utf-8").split()))
-            sumAll = sumLine + sumAll
-            numLine = numLine + 1
-        PVT.write(f"Anc {POP}: \n")
+            line = line.decode("utf-8")
+            split = line.strip().split()
+            for i in range(len(split)):
+                if split[i] != "nan":
+                    sumAll = sumAll + float(split[i])
+                    numNumber = numNumber + 1
         PVT.write(f"\tSum all R2 = {sumAll}\n")
-        PVT.write(f"\t# of windows = {numLine}\n")
-        PVT.write(f"\t# of tests = {sumAll / numLine}\n")
-        PVT.write(f"\tPVT (BonFerroni) = {0.05 / (sumAll / numLine)}\n")
+        PVT.write(f"\t# of SNPs squared = {numNumber}\n")
+        PVT.write(f"\t# of tests = {numNumber / sumAll}\n")
+        PVT.write(f"\tPVT (BonFerroni) = {0.05 / (numNumber / sumAll)}\n")
 
     PVT.close()
