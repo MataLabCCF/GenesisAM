@@ -293,43 +293,35 @@ if __name__ == '__main__':
         execute(commandLine)
 
 
-    #Number of independent tests
+    # Number of independent tests
+    # Calculation based on Gao X, Becker LC, Becker DM, Starmer J, Province MA (2009) Avoiding the high
+    # Bonferroni penalty in genome-wide association studies. Genetic Epidemiology
 
-    PVT = open(f"{args.outputFolder}/PLINK_Results/{args.outputName}_PVT.txt", "w")
+    #PVT = open(f"{args.outputFolder}/PLINK_Results/{args.outputName}_PVT.txt", "w")
     for ID in dictAnc:
-
         POP = dictAnc[ID]
-        mergePlinkFile = open(f"{args.outputFolder}/PLINK_Results/{args.outputName}_{POP}_mergeList.txt", "w")
+        fileOut = open(f"{args.outputFolder}/LA_Results/Dosage_{POP}_chromAll.tsv", "w")
         for chrom in range(args.begin, args.end+1):
             VCF = f"{args.outputFolder}/LA_Results/{args.outputName}_{POP}_chrom{chrom}.vcf"
-            print(f"({chrom})Converting VCF {VCF}")
-            execute(f"{args.plink1} --vcf {VCF} --make-bed --out {args.outputFolder}/PLINK_Results/"
-                      f"{args.outputName}_{POP}_chrom{chrom}")
+            fileIn = open(VCF)
 
-            if chrom != 1:
-                mergePlinkFile.write(f"{args.outputFolder}/PLINK_Results/{args.outputName}_{POP}_chrom{chrom}\n")
-        mergePlinkFile.close()
-        execute(f"{args.plink1} --bfile {args.outputFolder}/PLINK_Results/{args.outputName}_{POP}_chrom1 --merge-list "
-                  f"{args.outputFolder}/PLINK_Results/{args.outputName}_{POP}_mergeList.txt --out "
-                  f"{args.outputFolder}/PLINK_Results/{args.outputName}_{POP}_chromAll")
+            header = True
+            for line in fileIn:
+                if header:
+                    if line.startswith("#CHROM"):
+                        header = False
+                else:
+                    split = line.strip().split()
 
-        execute(f"{args.plink1} --bfile {args.outputFolder}/PLINK_Results/{args.outputName}_{POP}_chromAll --r2 square gz yes-really "
-              f"--out {args.outputFolder}/PLINK_Results/{args.outputName}_{POP}_R2")
+                    for i in range(9, len(split)):
+                        A1, A2 = split[i].split("/")
+                        dosage = int(A1) + int(A2)
+                        if i == 9:
+                            fileOut.write(f"{dosage}")
+                        else:
+                            fileOut.write(f"\t{dosage}")
+                    fileOut.write("\n")
 
-
-        file = gzip.open(f"{args.outputFolder}/PLINK_Results/{args.outputName}_{POP}_R2.ld.gz")
-        sumAll = 0
-        numNumber = 0
-        for line in file:
-            line = line.decode("utf-8")
-            split = line.strip().split()
-            for i in range(len(split)):
-                if split[i] != "nan":
-                    sumAll = sumAll + float(split[i])
-                    numNumber = numNumber + 1
-        PVT.write(f"\tSum all R2 = {sumAll}\n")
-        PVT.write(f"\t# of SNPs squared = {numNumber}\n")
-        PVT.write(f"\t# of tests = {numNumber / sumAll}\n")
-        PVT.write(f"\tPVT (BonFerroni) = {0.05 / (numNumber / sumAll)}\n")
-
-    PVT.close()
+        fileOut.close()
+        print(f"Rscript simpleM.R {args.outputFolder}/LA_Results/Dosage_{POP}_chromAll.tsv > {args.outputFolder}/LA_Results/PVT_{POP}.txt")
+        os.system(f"Rscript simpleM.R {args.outputFolder}/LA_Results/Dosage_{POP}_chromAll.tsv > {args.outputFolder}/LA_Results/PVT_{POP}.txt")
