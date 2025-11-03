@@ -314,7 +314,7 @@ if __name__ == '__main__':
                     split = line.strip().split()
 
                     for i in range(9, len(split)):
-                        A1, A2 = split[i].split("/")
+                        A1, A2 = split[i].split("|")
                         dosage = int(A1) + int(A2)
                         if i == 9:
                             fileOut.write(f"{dosage}")
