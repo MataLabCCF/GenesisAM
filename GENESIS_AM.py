@@ -291,37 +291,3 @@ if __name__ == '__main__':
         commandLine = (f"{commandLine} {args.outputFolder}/PLINK_Results/{args.outputName}_KING_Fixed.kin0 "
                        f"{args.outputFolder}/AM_Results/{args.outputName}_CHROM{chrom} {args.covar}")
         execute(commandLine)
-
-
-    # Number of independent tests
-    # Calculation based on Gao X, Becker LC, Becker DM, Starmer J, Province MA (2009) Avoiding the high
-    # Bonferroni penalty in genome-wide association studies. Genetic Epidemiology
-
-    #PVT = open(f"{args.outputFolder}/PLINK_Results/{args.outputName}_PVT.txt", "w")
-    for ID in dictAnc:
-        POP = dictAnc[ID]
-        fileOut = open(f"{args.outputFolder}/LA_Results/Dosage_{POP}_chromAll.tsv", "w")
-        for chrom in range(args.begin, args.end+1):
-            VCF = f"{args.outputFolder}/LA_Results/{args.outputName}_{POP}_chrom{chrom}.vcf"
-            fileIn = open(VCF)
-
-            header = True
-            for line in fileIn:
-                if header:
-                    if line.startswith("#CHROM"):
-                        header = False
-                else:
-                    split = line.strip().split()
-
-                    for i in range(9, len(split)):
-                        A1, A2 = split[i].split("/")
-                        dosage = int(A1) + int(A2)
-                        if i == 9:
-                            fileOut.write(f"{dosage}")
-                        else:
-                            fileOut.write(f"\t{dosage}")
-                    fileOut.write("\n")
-
-        fileOut.close()
-        print(f"Rscript simpleM.R {args.outputFolder}/LA_Results/Dosage_{POP}_chromAll.tsv > {args.outputFolder}/LA_Results/PVT_{POP}.txt")
-        os.system(f"Rscript simpleM.R {args.outputFolder}/LA_Results/Dosage_{POP}_chromAll.tsv > {args.outputFolder}/LA_Results/PVT_{POP}.txt")
